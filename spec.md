@@ -3,9 +3,9 @@
 ## 1. 데이터 모델 (ERD 및 테이블 정의)
 물리적 FK 제약조건은 배제하였으며, 조회를 위한 인덱스만 구성합니다.
 
-### 1.1 `users` (사용자 - 가정)
+### 1.1 `users` (사용자)
 * `id` (VARCHAR, PK)
-* `real_name` (VARCHAR, Not Null)
+* `name` (VARCHAR, Not Null)
 
 ### 1.2 `posts` (게시글)
 * `id` (BIGINT, PK, Auto Increment)
