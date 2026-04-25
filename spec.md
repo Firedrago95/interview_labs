@@ -10,7 +10,7 @@
 ### 1.2 `posts` (게시글)
 * `id` (BIGINT, PK, Auto Increment)
 * `channel_type` (VARCHAR, Not Null) - 'REAL_NAME' | 'ANONYMOUS'
-* `author_id` (VARCHAR, Not Null) - Logical FK to users.id
+* `author_id` (VARCHAR, Not Null) - 논리적 외래키 to users.id
 * `title` (VARCHAR, Not Null)
 * `content` (TEXT, Not Null)
 * `view_count` (BIGINT, Default 0)
@@ -18,12 +18,12 @@
 * `comment_count` (BIGINT, Default 0)
 * `is_deleted` (BOOLEAN, Default false)
 * `created_at` (TIMESTAMP)
-* **Indexes:** `idx_channel_created` (channel_type, created_at DESC) - 페이지네이션용
+* **Indexes:** `idx_channel_created` (channel_type, id DESC) - 페이지네이션용
 
 ### 1.3 `post_nickname_mappings` (익명 닉네임 매핑)
 * `id` (BIGINT, PK, Auto Increment)
-* `post_id` (BIGINT, Not Null) - Logical FK to posts.id
-* `user_id` (VARCHAR, Not Null) - Logical FK to users.id
+* `post_id` (BIGINT, Not Null) - 논리적 외래키 to posts.id
+* `user_id` (VARCHAR, Not Null) - 논리적 외래키 to users.id
 * `nickname` (VARCHAR, Not Null) - 예: "푸른 고래"
 * `is_author` (BOOLEAN, Default false)
 * **Constraints/Indexes:**
@@ -32,9 +32,9 @@
 
 ### 1.4 `comments` (댓글)
 * `id` (BIGINT, PK, Auto Increment)
-* `post_id` (BIGINT, Not Null) - Logical FK to posts.id
-* `user_id` (VARCHAR, Not Null) - Logical FK to users.id
-* `parent_id` (BIGINT, Nullable) - Logical FK to comments.id (최대 1단계 깊이)
+* `post_id` (BIGINT, Not Null) - 논리적 외래키 to posts.id
+* `user_id` (VARCHAR, Not Null) - 논리적 외래키 to users.id
+* `parent_id` (BIGINT, Nullable) - 논리적 외래키 to comments.id (최대 1단계 깊이)
 * `content` (VARCHAR, Not Null)
 * `is_deleted` (BOOLEAN, Default false) - Soft Delete 상태
 * **Indexes:** `idx_post_parent_created` (post_id, parent_id, created_at)
