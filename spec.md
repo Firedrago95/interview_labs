@@ -90,42 +90,42 @@
     - `channelType`: (Required) 'REAL_NAME' | 'ANONYMOUS'
     - `lastPostId`: (Optional) 지난 페이지의 마지막 게시글 ID (Long)
     - `size`: (Optional) 조회할 항목 수 (Default: 20)
-- **Response (200 OK):**
-  ```json
-  {
-  "content": [
+  - **Response (200 OK):**
+    ```json
     {
-      "postId": 100,
-      "title": "항해 중 엔진 점검 팁...",
-      "viewCount": 42,
-      "likeCount": 15,
-      "commentCount": 3,
-      "createdAt": "2026-04-25T10:00:00Z"
+    "content": [
+      {
+        "postId": 100,
+        "title": "항해 중 엔진 점검 팁...",
+        "viewCount": 42,
+        "likeCount": 15,
+        "commentCount": 3,
+        "createdAt": "2026-04-25T10:00:00Z"
+      }
+    ],
+    "lastPostId": 81, // 다음 조회를 위한 커서값 (content의 마지막 ID)
+    "hasNext": true   // 다음 페이지 존재 여부
     }
-  ],
-  "lastPostId": 81, // 다음 조회를 위한 커서값 (content의 마지막 ID)
-  "hasNext": true   // 다음 페이지 존재 여부
-  }
-  ```
+    ```
 
 #### 3) 게시글 상세 조회
 
 - **Endpoint:** `GET /api/v1/posts/{postId}`
 - **Description:** 게시글 상세 내용을 조회합니다. 원자적 업데이트(`UPDATE ... SET view_count = view_count + 1`)를 통해 조회수를
   1 증가시키며, 삭제된 게시글인 경우 조회가 불가합니다.
-- **Response (200 OK):**
-  ```json
-  {
-  "postId": 100,
-  "channelType": "ANONYMOUS",
-  "title": "항해 중 엔진 점검 팁...",
-  "content": "상세 내용 전문...",
-  "authorDisplayName": "용감한 고래", // 채널 타입에 따라 실명 또는 익명 닉네임 반환
-  "viewCount": 43,
-  "likeCount": 15,
-  "createdAt": "2026-04-25T10:00:00Z"
-  }
-  ```
+  - **Response (200 OK):**
+    ```json
+    {
+      "postId": 100,
+      "channelType": "ANONYMOUS",
+      "title": "항해 중 엔진 점검 팁...",
+      "content": "상세 내용 전문...",
+      "authorDisplayName": "용감한 고래", // 채널 타입에 따라 실명 또는 익명 닉네임 반환
+      "viewCount": 43,
+      "likeCount": 15,
+      "createdAt": "2026-04-25T10:00:00Z"
+    }
+    ```
 
 #### 4) 게시글 수정/삭제
 
@@ -142,17 +142,17 @@
 - **Request Body:**
   ```json
   {
-  "parentId": null, // 답글일 경우 부모 댓글의 ID 입력
-  "content": "좋은 정보 감사합니다!"
+    "parentId": null, // 답글일 경우 부모 댓글의 ID 입력
+    "content": "좋은 정보 감사합니다!"
   }
   ```
 - **Response (201 Created):**
   ```json
   { 
-  "commentId": 20, 
-  "displayName": "조용한 돌고래",
-  "content": "좋은 정보 감사합니다!",
-  "createdAt": "2026-04-25T10:05:00Z"
+    "commentId": 20, 
+    "displayName": "조용한 돌고래",
+    "content": "좋은 정보 감사합니다!",
+    "createdAt": "2026-04-25T10:05:00Z"
   }
   ```
 
@@ -172,17 +172,17 @@
 - **Request Body:**
   ```json
   {
-  "targetType": "POST", // 'POST' 또는 'COMMENT'
-  "targetId": 100,
-  "reactionType": "LIKE" // 'LIKE' 또는 'DISLIKE'
+    "targetType": "POST", // 'POST' 또는 'COMMENT'
+    "targetId": 100,
+    "reactionType": "LIKE" // 'LIKE' 또는 'DISLIKE'
   }
   ```
 - **Response (200 OK):**
   ```json
   {
-  "currentReaction": "LIKE", // 다시 눌러 취소된 경우 null
-  "targetLikeCount": 16,
-  "targetDislikeCount": 0
+    "currentReaction": "LIKE", // 다시 눌러 취소된 경우 null
+    "targetLikeCount": 16,
+    "targetDislikeCount": 0
   }
   ```
 
