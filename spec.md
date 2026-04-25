@@ -1,5 +1,7 @@
 # [VMS 과제] S2. 선원 익명 커뮤니티 게시판 - 실행 계획 (spec.md)
 
+# [VMS 과제] S2. 선원 익명 커뮤니티 게시판 - 실행 계획 (spec.md)
+
 ## 1. 데이터 모델 (ERD 및 테이블 정의)
 물리적 FK 제약조건은 배제하였으며, 조회를 위한 인덱스만 구성합니다.
 
@@ -15,10 +17,11 @@
 * `content` (TEXT, Not Null)
 * `view_count` (BIGINT, Default 0)
 * `like_count` (BIGINT, Default 0)
+* `dislike_count` (BIGINT, Default 0)
 * `comment_count` (BIGINT, Default 0)
 * `is_deleted` (BOOLEAN, Default false)
-* `created_at` (TIMESTAMP)
-* **Indexes:** `idx_channel_created` (channel_type, id DESC) - 페이지네이션용
+* `created_at` (TIMESTAMP, Not Null, Default CURRENT_TIMESTAMP)
+* **Indexes:** `idx_channel_id` (channel_type, id DESC) - 페이지네이션용
 
 ### 1.3 `post_nickname_mappings` (익명 닉네임 매핑)
 * `id` (BIGINT, PK, Auto Increment)
@@ -36,7 +39,10 @@
 * `user_id` (VARCHAR, Not Null) - 논리적 외래키 to users.id
 * `parent_id` (BIGINT, Nullable) - 논리적 외래키 to comments.id (최대 1단계 깊이)
 * `content` (VARCHAR, Not Null)
-* `is_deleted` (BOOLEAN, Default false) - Soft Delete 상태
+* `like_count` (BIGINT, Default 0) 
+* `dislike_count` (BIGINT, Default 0)
+* `is_deleted` (BOOLEAN, Default false)
+* `created_at` (TIMESTAMP, Not Null, Default CURRENT_TIMESTAMP)
 * **Indexes:** `idx_post_parent_created` (post_id, parent_id, created_at)
 
 ### 1.5 `reactions` (반응)
@@ -44,9 +50,9 @@
 * `target_type` (VARCHAR, Not Null) - 'POST' | 'COMMENT'
 * `target_id` (BIGINT, Not Null)
 * `user_id` (VARCHAR, Not Null)
-* `reaction_type` (VARCHAR, Nullable) - 'LIKE' | 'DISLIKE' | Null(취소상태)
+* `reaction_type` (VARCHAR, Nullable) - 'LIKE' | 'DISLIKE' | Null(취소)
 * **Constraints/Indexes:**
-    * `uk_target_user` UNIQUE (target_type, target_id, user_id)
+  * `uk_target_user` UNIQUE (target_type, target_id, user_id)
 
 ---
 
@@ -56,7 +62,7 @@
 
 #### 1) 게시글 작성
 - **Endpoint:** `POST /api/v1/posts`
-- **Description:** 새로운 게시글을 작성합니다. 채널 타입에 따라 실명 혹은 익명으로 처리됩니다.
+- **Description:** 새로운 게시글을 작성합니다. 채널 타입에 따라 실명 혹은 익명으로 처리됩니다. **익명 게시글의 경우, 작성자의 닉네임 매핑(`is_author=true`)을 트랜잭션 내에서 즉시 생성하여 상세 조회 시 닉네임 노출을 보장합니다.**
 - **Request Body:**
   ```json
   {
@@ -69,7 +75,7 @@
 
 #### 2) 게시글 목록 조회 (커서 기반 페이지네이션)
 - **Endpoint:** `GET /api/v1/posts`
-- **Description:** 마지막 조회 ID(`lastPostId`)를 기준으로 채널별 목록을 조회합니다. 처음 조회 시에는 `lastPostId`를 비우거나 최대값을 보냅니다.
+- **Description:** 채널별 게시글 목록을 페이지네이션하여 조회합니다. 처음 조회 시에는 `lastPostId`를 비웁니다. `is_deleted = true`인 게시글은 목록 조회 대상에서 제외됩니다.
 - **Query Parameters:**
   - `channelType`: (Required) 'REAL_NAME' | 'ANONYMOUS'
   - `lastPostId`: (Optional) 지난 페이지의 마지막 게시글 ID (Long)
@@ -93,7 +99,7 @@
   ```
 #### 3) 게시글 상세 조회
 - **Endpoint:** `GET /api/v1/posts/{postId}`
-- **Description:** 게시글 상세 내용을 조회하며, 조회수가 1증가합니다.
+- **Description:** 게시글 상세 내용을 조회합니다. 원자적 업데이트(`UPDATE ... SET view_count = view_count + 1`)를 통해 조회수를 1 증가시키며, 삭제된 게시글인 경우 조회가 불가합니다.
 - **Response (200 OK):**
   ```json
   {
@@ -116,7 +122,7 @@
 ### 2.2 댓글 도메인 (Comments)
 #### 1) 댓글 및 답글 작성
 - **Endpoint:** `POST /api/v1/posts/{postId}/comments`
-- **Description:** 게시글에 댓글 또는 답글을 작성합니다. 답글의 답글은 허용되지 않습니다.
+- **Description:** 게시글에 댓글 또는 답글을 작성합니다. 답글의 답글은 허용되지 않습니다. 댓글 저장 전 `resolveNickname`을 호출하여 작성자 닉네임을 생성/조회하며, 성공 시 게시글의 `comment_count`를 원자적으로 1 증가시킵니다.
 - **Request Body:**
   ```json
   {
@@ -136,14 +142,14 @@
 
 #### 2) 댓글 삭제
 - **Endpoint:** `DELETE /api/v1/posts/{postId}/comments/{commentId}`
-- **Description:** 댓글을 삭제합니다. 답글이 있는 경우 내용만 대체됩니다.
+- **Description:** 댓글을 삭제합니다. 답글이 있는 경우 내용만 대체됩니다. 삭제 성공 시 게시글의 `comment_count`를 원자적으로 1 감소시킵니다.
 - **Response (204 No Content)**
 
 ## 2.3 반응 도메인 (Reactions)
 
 ### 1) 좋아요/싫어요 토글
 - **Endpoint:** `POST /api/v1/reactions`
-- **Description:** 게시글 또는 댓글에 좋아요/싫어요 반응을 남기거나 취소/변경합니다.
+- **Description:** 게시글 또는 댓글에 좋아요/싫어요 반응을 남기거나 취소/변경합니다. `targetType`에 따라 대상(게시글 혹은 댓글)의 `like_count`, `dislike_count`를 상태 전이 규칙에 맞춰 원자적으로 갱신하여 정합성을 보장합니다.
 - **Request Body:**
   ```json
   {
@@ -189,19 +195,63 @@ String resolveNickname(Long postId, String userId) {
     throw new ServerException("닉네임 할당 실패");
 }
 ```
+
+### 3.2 반응 전이 규칙 및 카운트 동기화
+* reactions 테이블과 posts.like_count 간의 정합성을 맞추기 위한 상태 전이.
+```java
+@Transactional
+void toggleReaction(Long targetId, String userId, ReactionType newReaction) {
+    // 1. 타겟 레코드 유효성 검사 (존재 여부 & soft-delete 상태)
+    validateTargetExistsAndNotDeleted(targetId);
+
+    // 2. 기존 반응 상태 조회
+    ReactionType oldReaction = reactionRepository.findReactionType(targetId, userId);
+    
+    // 3. 상태 전이 로직 (State Matrix)
+    ReactionType finalReaction;
+    int likeDelta = 0, dislikeDelta = 0;
+
+    if (oldReaction == null) {
+        // [1] 신규 추가
+        finalReaction = newReaction;
+        if (newReaction == LIKE) likeDelta = 1;
+        else dislikeDelta = 1;
+    } else if (oldReaction == newReaction) {
+        // [2] 같은 반응 다시 클릭 -> 취소 (NULL 처리)
+        finalReaction = null;
+        if (oldReaction == LIKE) likeDelta = -1;
+        else dislikeDelta = -1;
+    } else {
+        // [3] 다른 반응으로 변경
+        finalReaction = newReaction;
+        if (newReaction == LIKE) { likeDelta = 1; dislikeDelta = -1; }
+        else { likeDelta = -1; dislikeDelta = 1; }
+    }
+
+    // 4. DB 반영 (UPSERT 및 카운트 원자적 갱신)
+    reactionRepository.upsert(targetId, userId, finalReaction); // DELETE 대신 NULL
+    postRepository.updateReactionCounts(targetId, likeDelta, dislikeDelta);
+}
+```
 ---
 
 ## 4. Edge Case 분석 및 처리 전략
 
-### 4.1 삭제된 부모 댓글의 노출 문제
+### 4.1 논리적 외래키(FK)의 참조 무결성 및 동시성 방어
+- **상황:** 물리적 FK가 없기 때문에 삭제된 게시글에 댓글/좋아요가 생성될 위험이 있으며, 단순 조회 검증만으로는 찰나의 순간에 게시글이 삭제되는 'Check-Then-Act' 레이스 컨디션을 막을 수 없음.
+- **처리:**
+  1. **ORM 레벨:** 엔티티에 `@SQLRestriction("is_deleted = false")` (또는 `@Where`)를 적용하여 소프트 딜리트된 데이터의 조회를 애플리케이션 전역에서 1차 차단함.
+  2. **비즈니스 레벨:** 영속성 컨텍스트의 지연 데이터 문제를 방지하기 위해, Write(POST/DELETE) 하기 전에 db에 재조회 하여 명시적으로 확인합니다.
+  3. **DB 쿼리 레벨 (극단적 동시성 고려):** 초고트래픽 상황에서 완벽한 정합성이 요구되는 경우, 단순 `INSERT` 대신 `INSERT INTO ... SELECT ... WHERE is_deleted = false` 형태의 원자적 쿼리를 활용해 DB 락 없이 고아 데이터 생성을 물리적으로 차단함.
+
+### 4.2 삭제된 부모 댓글의 노출 문제
 - **상황:** 부모 댓글을 물리적 삭제하면 자식 답글이 고아가 됨
 - **처리:** `is_deleted = true`로 Soft Delete 처리  
   API 응답 시 `is_deleted`가 true이면 `content` 필드를 "삭제된 댓글입니다"로 매핑하여 전달
 
-### 4.2 무의미한 조회수 어뷰징
-- **상황:** 한 사용자가 새로고침을 반복하여 게시글 조회수가 급증함
-- **처리:** `X-User-Id` 기준으로 Redis 또는 로컬 캐시(만료 1시간)에 조회 이력을 기록하여  
-  중복 조회수 증가를 방지함
+### 4.3 과도한 조회수 증가 방지
+- **상황:** 새로고침 연타로 인한 무의미한 조회수 어뷰징
+- **처리:** 일차적으로 서버내 로컬 캐시에서 (userId, postId) 키를 1시간 만료로 저장해 어뷰징을 막고, 단일 인스턴스 한계를 넘어서는 확장이 필요할때, Redis 기반 분산 캐시로 전환함.
 
 ---
 
