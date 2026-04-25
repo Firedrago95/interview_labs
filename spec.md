@@ -50,20 +50,116 @@
 
 ---
 
-## 2. API 설계 (핵심 엔드포인트)
+## 2. API 설계
+모든 API는 인증을 위해 요청 헤더에 `X-User-Id: {userId}`를 포함한다고 가정합니다
+### 2.1 게시글 도메인 (Posts)
 
-### 2.1 댓글 작성 API
-* **Endpoint:** `POST /api/v1/posts/{postId}/comments`
-* **Header:** `X-User-Id: {userId}`
-* **Request:** `{ "parentId": null, "content": "좋은 정보 감사합니다!" }`
-* **Response (200 OK):** `{ "commentId": 15, "nickname": "푸른 고래", "content": "..." }`
+#### 1) 게시글 작성
+- **Endpoint:** `POST /api/v1/posts`
+- **Description:** 새로운 게시글을 작성합니다. 채널 타입에 따라 실명 혹은 익명으로 처리됩니다.
+- **Request Body:**
+  ```json
+  {
+    "channelType": "ANONYMOUS", // 'REAL_NAME' 또는 'ANONYMOUS'
+    "title": "항해 중 엔진 점검 팁 공유합니다",
+    "content": "최근 겪었던 고온 경보 해결 사례입니다..."
+  }
+  ```
+- **Response (201 Created):** `{"postId": 100}`
 
-### 2.2 반응(좋아요/싫어요) 토글 API
-* **Endpoint:** `POST /api/v1/reactions`
-* **Header:** `X-User-Id: {userId}`
-* **Request:** `{ "targetType": "POST", "targetId": 100, "reactionType": "LIKE" }`
-* **Response (200 OK):** `{ "currentReaction": "LIKE", "likeCount": 42 }`
+#### 2) 게시글 목록 조회 (커서 기반 페이지네이션)
+- **Endpoint:** `GET /api/v1/posts`
+- **Description:** 마지막 조회 ID(`lastPostId`)를 기준으로 채널별 목록을 조회합니다. 처음 조회 시에는 `lastPostId`를 비우거나 최대값을 보냅니다.
+- **Query Parameters:**
+  - `channelType`: (Required) 'REAL_NAME' | 'ANONYMOUS'
+  - `lastPostId`: (Optional) 지난 페이지의 마지막 게시글 ID (Long)
+  - `size`: (Optional) 조회할 항목 수 (Default: 20)
+- **Response (200 OK):**
+  ```json
+  {
+  "content": [
+    {
+      "postId": 100,
+      "title": "항해 중 엔진 점검 팁...",
+      "viewCount": 42,
+      "likeCount": 15,
+      "commentCount": 3,
+      "createdAt": "2026-04-25T10:00:00Z"
+    }
+  ],
+  "lastPostId": 81, // 다음 조회를 위한 커서값 (content의 마지막 ID)
+  "hasNext": true   // 다음 페이지 존재 여부
+  }
+  ```
+#### 3) 게시글 상세 조회
+- **Endpoint:** `GET /api/v1/posts/{postId}`
+- **Description:** 게시글 상세 내용을 조회하며, 조회수가 1증가합니다.
+- **Response (200 OK):**
+  ```json
+  {
+  "postId": 100,
+  "channelType": "ANONYMOUS",
+  "title": "항해 중 엔진 점검 팁...",
+  "content": "상세 내용 전문...",
+  "authorDisplayName": "용감한 고래", // 채널 타입에 따라 실명 또는 익명 닉네임 반환
+  "viewCount": 43,
+  "likeCount": 15,
+  "createdAt": "2026-04-25T10:00:00Z"
+  }
+  ```
 
+#### 4) 게시글 수정/삭제
+- **수정:** `PATCH /api/v1/posts/{postId}` (Request Body에 수정할 title, content 포함)
+- **삭제:** `DELETE /api/v1/posts/{postId}` (Soft Delete 처리)
+
+
+### 2.2 댓글 도메인 (Comments)
+#### 1) 댓글 및 답글 작성
+- **Endpoint:** `POST /api/v1/posts/{postId}/comments`
+- **Description:** 게시글에 댓글 또는 답글을 작성합니다. 답글의 답글은 허용되지 않습니다.
+- **Request Body:**
+  ```json
+  {
+  "parentId": null, // 답글일 경우 부모 댓글의 ID 입력
+  "content": "좋은 정보 감사합니다!"
+  }
+  ```
+- **Response (201 Created):** 
+  ```json
+  { 
+  "commentId": 20, 
+  "displayName": "조용한 돌고래",
+  "content": "좋은 정보 감사합니다!",
+  "createdAt": "2026-04-25T10:05:00Z"
+  }
+  ```
+
+#### 2) 댓글 삭제
+- **Endpoint:** `DELETE /api/v1/posts/{postId}/comments/{commentId}`
+- **Description:** 댓글을 삭제합니다. 답글이 있는 경우 내용만 대체됩니다.
+- **Response (204 No Content)**
+
+## 2.3 반응 도메인 (Reactions)
+
+### 1) 좋아요/싫어요 토글
+- **Endpoint:** `POST /api/v1/reactions`
+- **Description:** 게시글 또는 댓글에 좋아요/싫어요 반응을 남기거나 취소/변경합니다.
+- **Request Body:**
+  ```json
+  {
+  "targetType": "POST", // 'POST' 또는 'COMMENT'
+  "targetId": 100,
+  "reactionType": "LIKE" // 'LIKE' 또는 'DISLIKE'
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+  "currentReaction": "LIKE", // 다시 눌러 취소된 경우 null
+  "targetLikeCount": 16,
+  "targetDislikeCount": 0
+  }
+  ```
 ---
 
 ## 3. 핵심 비즈니스 로직 (Pseudo-code)
@@ -125,14 +221,3 @@ String resolveNickname(Long postId, String userId) {
 - **Then:** 댓글 1의 `is_deleted`는 true가 된다  
   게시글 조회 API 호출 시 댓글 1의 내용은 "삭제된 댓글입니다"로 노출되며,  
   하위 답글(ID:2)은 정상적으로 노출된다
-
-### 🚀 다음 스텝 제안
-
-현재 초안은 요구사항을 완벽히 커버하고 있으며, 바로 제출해도 될 만큼 높은 퀄리티(특히 DB 락 제어나 동시성 방어 논리)를 자랑합니다. 
-
-다만, 4번과 5번 항목(조회수/좋아요 카운트 방식, 토글 로직)은 제가 지원자님의 포트폴리오를 기반으로 임의로 논리를 전개해 둔 상태입니다. 
-
-1. **"이대로 복사해서 바로 제출하겠습니다!"** (시간이 촉박할 경우)
-2. **"좋아요 역정규화랑 동시 토글 부분은 면접에서 설명하려면 로직을 한 번 더 짚고 넘어가야 할 것 같아."**
-
-어떻게 진행하시겠습니까? 완벽한 방어를 위해 두 번째 옵션을 짧게라도 논의하고 제출하시는 것을 추천드립니다!
