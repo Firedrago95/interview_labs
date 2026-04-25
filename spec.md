@@ -296,3 +296,9 @@ void toggleReaction(String targetType, Long targetId, String userId, ReactionTyp
 - **Then:** 댓글 1의 `is_deleted`는 true가 된다  
   게시글 조회 API 호출 시 댓글 1의 내용은 "삭제된 댓글입니다"로 노출되며,  
   하위 답글(ID:2)은 정상적으로 노출된다
+
+### 5.3 반응(좋아요/싫어요) 상태 전이 및 카운트 동기화
+- **Given:** User A가 게시글(ID:100)에 이미 'LIKE' 반응을 남긴 상태이며, 게시글의 `like_count`는 15, `dislike_count`는 2이다.
+- **When:** User A가 동일한 게시글(ID:100)에 'DISLIKE' (싫어요) 버튼을 클릭하여 API를 호출한다.
+- **Then:** `reactions` 테이블의 해당 레코드는 `reaction_type = DISLIKE`로 변경된다.
+  트랜잭션 종료 후 게시글(ID:100)의 `like_count`는 14(-1)가 되고, `dislike_count`는 3(+1)이 되어 데이터 정합성이 완벽히 유지된다.
