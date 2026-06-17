@@ -28,7 +28,7 @@ public class ParkingLot {
         }
     }
 
-    public Ticket enterLot(Car car) {
+    public Ticket enterLot(Car car, LocalDateTime entryTime) {
         if (!checkEmptySpot(car)) {
             throw new IllegalStateException("해당 차량이 주차할 공간이 없습니다.");
         }
@@ -37,11 +37,11 @@ public class ParkingLot {
         emptySpot.enterCar(car);
         parkedSpots.put(car.getLicensePlate(), emptySpot);
         System.out.printf("%s %s 차량 주차%n", car.getLicensePlate(), car.getLicensePlate());
-        return new Ticket(car, LocalDateTime.now());
+        return new Ticket(car, entryTime);
     }
 
-    public Long exitLot(Ticket ticket) {
-        Long price = ticket.calculatePrice(LocalDateTime.now());
+    public Long exitLot(Ticket ticket, LocalDateTime exitTime) {
+        Long price = ticket.calculatePrice(exitTime);
 
         Car car = ticket.getCar();
         String licensePlate = car.getLicensePlate();

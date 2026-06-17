@@ -1,9 +1,10 @@
 package com.example.demo.parking;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public class ParkingApplication {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // 1. 주차장 오픈 (소형 2대, 중형 1대, 대형 1대)
         ParkingLot parkingLot = new ParkingLot(Map.of(
                 Type.SMALL, 2,
@@ -21,19 +22,20 @@ public class ParkingApplication {
 
         // 3. 입차 진행
         System.out.println("\n=== 🚗 입차 진행 ===");
-        Ticket ticket1 = parkingLot.enterLot(car1);
+        Ticket ticket1 = parkingLot.enterLot(car1, LocalDateTime.now());
 
-        Ticket ticket2 = parkingLot.enterLot(car2);
+        Ticket ticket2 = parkingLot.enterLot(car2, LocalDateTime.now());
 
-        Ticket ticket3 = parkingLot.enterLot(car3);
+        Ticket ticket3 = parkingLot.enterLot(car3, LocalDateTime.now());
 
         // 4. 입차 후 현황
         System.out.println("\n=== 📊 입차 후 주차장 현황 ===");
         parkingLot.printAvailableSpots();
 
         // 5. 출차 진행
+        Thread.sleep(1_000_000);
         System.out.println("\n=== 💨 출차 진행 ===");
-        Long fee1 = parkingLot.exitLot(ticket1);
+        Long fee1 = parkingLot.exitLot(ticket1, LocalDateTime.now());
 
         // 6. 출차 후 현황
         System.out.println("\n=== 📊 출차 후 주차장 현황 ===");
