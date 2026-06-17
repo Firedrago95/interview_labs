@@ -15,7 +15,7 @@ public class Ticket {
     }
 
     public Long calculatePrice(LocalDateTime exitTime) {
-        Long price = car.calcualtePrice(entryTime, exitTime);
+        Long price = car.calculatePrice(entryTime, exitTime);
         this.price = price;
         return price;
     }

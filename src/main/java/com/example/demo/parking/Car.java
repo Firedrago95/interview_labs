@@ -12,7 +12,7 @@ public class Car {
         this.type = type;
     }
 
-    public Long calcualtePrice(LocalDateTime entryTime, LocalDateTime exitTime) {
+    public Long calculatePrice(LocalDateTime entryTime, LocalDateTime exitTime) {
         return type.calculatePrice(entryTime, exitTime);
     }
 
