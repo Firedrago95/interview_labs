@@ -9,4 +9,12 @@ public class Car {
         this.licensePlate = licensePlate;
         this.type = type;
     }
+
+    public String getLicensePlate() {
+        return licensePlate;
+    }
+
+    public Type getType() {
+        return type;
+    }
 }
