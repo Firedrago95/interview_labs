@@ -15,4 +15,11 @@ public class ParkingSpot {
         }
         this.car = car;
     }
+
+    public void leaveCar() {
+        if (this.car == null) {
+            throw new IllegalStateException("이미 빈 주차장입니다.");
+        }
+        this.car = null;
+    }
 }
