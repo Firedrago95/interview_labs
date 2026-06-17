@@ -36,7 +36,7 @@ public class ParkingLot {
         ParkingSpot emptySpot = availableSpots.get(car.getType()).poll();
         emptySpot.enterCar(car);
         parkedSpots.put(car.getLicensePlate(), emptySpot);
-        System.out.printf("%s %s 차량 주차%n", car.getLicensePlate(), car.getLicensePlate());
+        System.out.printf("[%s] %s 차량 주차%n", car.getLicensePlate(), car.getType());
         return new Ticket(car, entryTime);
     }
 
@@ -54,7 +54,7 @@ public class ParkingLot {
         ParkingSpot removedSpot = parkedSpots.remove(licensePlate);
         removedSpot.leaveCar();
         availableSpots.get(type).add(removedSpot);
-        System.out.printf("%s %s 차량 출차완료 요금 : %d %n", car.getLicensePlate(), car.getLicensePlate(), price);
+        System.out.printf("[%s] %s 차량 출차완료 요금 : %d %n", car.getLicensePlate(), car.getType(), price);
         return price;
     }
 
