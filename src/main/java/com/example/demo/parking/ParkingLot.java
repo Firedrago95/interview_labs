@@ -30,7 +30,7 @@ public class ParkingLot {
 
     public Ticket enterLot(Car car, LocalDateTime entryTime) {
         if (!checkEmptySpot(car)) {
-            throw new IllegalStateException("해당 차량이 주차할 공간이 없습니다.");
+            throw new IllegalArgumentException("해당 차량이 주차할 공간이 없습니다.");
         }
 
         ParkingSpot emptySpot = availableSpots.get(car.getType()).poll();
@@ -48,7 +48,7 @@ public class ParkingLot {
         Type type = car.getType();
 
         if (!parkedSpots.containsKey(licensePlate)) {
-            throw new IllegalStateException("주차되어 있지 않은 차량입니다.");
+            throw new IllegalArgumentException("주차되어 있지 않은 차량입니다.");
         }
 
         ParkingSpot removedSpot = parkedSpots.remove(licensePlate);
@@ -62,8 +62,6 @@ public class ParkingLot {
         StringBuilder sb = new StringBuilder();
 
         for (Entry<Type, Queue<ParkingSpot>> e : availableSpots.entrySet()) {
-            Type type = e.getKey();
-            Queue<ParkingSpot> slots = e.getValue();
             sb.append(String.format("%s : %d대 주차가능\n", e.getKey(), e.getValue().size()));
         }
 
