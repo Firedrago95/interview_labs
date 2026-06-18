@@ -14,9 +14,13 @@ public class LottoResult {
         long totalPrize = 0;
 
         for (Map.Entry<Rank, Integer> entry : result.entrySet()) {
-            totalPrize += (long) entry.getKey().getWinningMoney();
+            totalPrize += (long) entry.getKey().getWinningMoney() * entry.getValue();
         }
 
         return (double) totalPrize / purchaseMoney * 100;
+    }
+
+    public int getCountOf(Rank rank) {
+        return result.getOrDefault(rank, 0);
     }
 }
