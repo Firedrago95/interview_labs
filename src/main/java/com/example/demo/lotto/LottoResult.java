@@ -13,7 +13,7 @@ public class LottoResult {
     public double calculateProfitRate(int purchaseMoney) {
         long totalPrize = 0;
 
-        for (Map.Entry<Rank, Integer> entry : result) {
+        for (Map.Entry<Rank, Integer> entry : result.entrySet()) {
             totalPrize += (long) entry.getKey().getWinningMoney();
         }
 
