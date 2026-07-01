@@ -19,26 +19,22 @@
   - **목표**: 인터뷰 대비용 실무 중심 프로젝트 구현
   - **핵심 경험**: 확장성 있는 아키텍처 설계, 동시성 이슈 해결, TDD 기반 테스트 작성 등
 
-### 2️⃣ [📚 CS 및 백엔드 핵심 이론 (Theory)](./theory/)
-면접에서 단골로 등장하는 핵심 CS 지식과 꼬리 질문에 대비해, 원리부터 깊이 있게 정리한 공간입니다.
+### 2️⃣ [📚 면접 기출 및 핵심 이론 (Interview QnA & Theory)](./interview-qna/)
+실제 면접 복기, 예상 질문, 그리고 그에 대한 꼬리 질문과 핵심 이론을 한곳에 모아둔 공간입니다.
+면접 전 이 디렉토리 하나만 보면 완벽하게 대비할 수 있도록 구성합니다.
 
-- **[Database](./theory/database/)**: 트랜잭션, 락, 인덱스 최적화, Redis 등
-- **[Java & Spring](./theory/java-spring/)**: JVM 구조, GC 동작 원리, Spring Bean 라이프사이클, 의존성 주입 등
-- **[System Design](./theory/system-design/)**: MSA, 대용량 트래픽 분산, 메시지 큐 시스템 등
+- **[Database](./interview-qna/database.md)**: 트랜잭션, 락, 인덱스 최적화, Redis 관련 기출 및 이론
+- **[Java & Spring](./interview-qna/java-spring.md)**: JVM 구조, GC, 싱글톤, 의존성 주입 기출 및 이론
+- **[System Design](./interview-qna/system-design.md)**: 대용량 트래픽, 아키텍처 관련 기출 및 이론
 
-### 3️⃣ [📝 면접 복기 및 오답노트 (Retrospectives)](./retrospectives/)
-실제 면접(혹은 모의 면접) 직후 남기는 회고록입니다.
-대답하지 못한 '아쉬운 질문'들을 정리하고, 다음번에는 완벽히 대답할 수 있도록 '나만의 모범 답안'을 완성해 나갑니다.
-
-### 4️⃣ [🛠 과제 전형 대비 및 복기 (Assignment Practices)](./assignment-practices/)
+### 3️⃣ [🛠 과제 전형 대비 및 복기 (Assignment Practices)](./assignment-practices/)
 과제 전형에서 제출했던 코드, 구현 과정에서의 설계 고민, 그리고 면접관에게 받았던 코드 리뷰 피드백을 기록하는 공간입니다.
 단순 알고리즘 풀이를 넘어, 실무형 요구사항을 어떻게 코드로 풀어냈는지 회고합니다.
 
 ---
 
 ## 🚀 앞으로의 학습 계획
-- **진행 중**: 이론 정리 폴더 셋업 및 기본 CS 내용 채우기
+- **진행 중**: 기출 질문 기반으로 핵심 이론 정리 시작
 - **Next Step**:
-  - 대답 못한 면접 질문들 `retrospectives` 폴더에 지속 업데이트 및 꼬리 질문 대비
-  - `theory` 폴더에 핵심 개념별 마이크로 아티클 작성
+  - 면접 복기 내용 및 예상 질문을 `interview-qna` 폴더에 주제별로 지속 업데이트
   - 과제 전형 및 코딩 테스트 회고 기록 시작
